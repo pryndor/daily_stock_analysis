@@ -949,5 +949,31 @@ class ComputeEffectiveRegionTestCase(unittest.TestCase):
         self.assertEqual(result, "cn")
 
 
+class MarketExchangeCalendarNamesAreRealTestCase(unittest.TestCase):
+    """MARKET_EXCHANGE values must be calendar names exchange-calendars
+    actually registers.
+
+    Every other test in this file mocks ``xcals``/``get_calendar``, so a
+    typo'd MIC code (e.g. ``XNSE`` instead of the library's ``XBOM`` for
+    India) passes the whole mocked suite while failing in production with
+    ``The requested ExchangeCalendar, XNSE, does not exist.`` — this test
+    is the one guard against that class of bug; it exercises the real
+    library instead of a fake.
+    """
+
+    def test_all_registered_market_exchanges_are_valid_calendar_names(self):
+        if not trading_calendar._XCALS_AVAILABLE:
+            self.skipTest("exchange-calendars not installed")
+        import exchange_calendars as xcals
+
+        valid_names = set(xcals.get_calendar_names())
+        for market, exchange in trading_calendar.MARKET_EXCHANGE.items():
+            self.assertIn(
+                exchange,
+                valid_names,
+                f"MARKET_EXCHANGE['{market}'] = '{exchange}' is not a real exchange-calendars name",
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

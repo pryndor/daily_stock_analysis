@@ -153,7 +153,7 @@ Portfolio 允许 JP/KR 账户、交易和持仓快照进入现有链路，但会
 - 印度日线和基础实时/近实时行情只走 `YfinanceFetcher`，不尝试 AkShare、Tushare、Efinance、Pytdx、Baostock 等 A 股专属数据源。
 - 基本面复用既有 offshore yfinance 轻量路径；A 股专属资金流、龙虎榜、板块等能力按 `not_supported` 降级。
 - 报告 Prompt 已增加印度市场语义（印度卢比、RBI、SEBI、FII/DII 资金流、circuit filter 涨跌停机制），避免套用 A 股北向资金、龙虎榜等概念。
-- 交易日历注册 `in: XNSE / Asia/Kolkata`。若本地 `exchange-calendars` 版本缺少 `XNSE` 日历，沿用既有 fail-open/fail-closed 语义（`get_open_markets_today()` 在 `exchange-calendars` 不可用时按 fail-open 把 `in` 计入当日开市集合）。
+- 交易日历注册 `in: XBOM / Asia/Kolkata`。若本地 `exchange-calendars` 版本缺少 `XBOM` 日历，沿用既有 fail-open/fail-closed 语义（`get_open_markets_today()` 在 `exchange-calendars` 不可用时按 fail-open 把 `in` 计入当日开市集合）。
 - `VALID_MARKETS`（Portfolio / DecisionSignal 持久化）与 `_ALLOWED_MARKETS`（Intelligence 自定义情报源 scope）已放行 `in`。
 
 不承诺项：
