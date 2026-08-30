@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 连字符形式的美股多类股代码（如伯克希尔 `BRK-B`，Yahoo Finance 的实际符号形式）此前未被识别为美股，被误判并默认按 A 股语义处理（拼接 `.SZ` 后缀），导致该代码在数据源路由、`detect_market` LLM 语境分类、股票身份解析（`stock_code_utils`）三处均判定为 `cn`，实际拉取时依次尝试 5 个数据源全部失败（含 baostock「股票代码应为9位」报错、yfinance `BRK-B.SZ` 404），耗时约 30 秒后仍对空数据发起 LLM 分析，得到低置信度的强制观望结论。三处美股代码正则统一放宽为同时接受 `.X` 与 `-X` 单字母后缀（`data_provider/us_index_mapping.py` 为路由/数据源侧唯一权威判定，`src/market_context.py`、`src/services/stock_code_utils.py` 为独立副本一并修正）。
 - [新功能] 新增 `MF_LIST` 配置（AMFI scheme code，逗号分隔，经 mfapi.in），独立于 `STOCK_LIST`：日报末尾追加共同基金小节，展示最新 NAV 与 1D/1W/1M/3M/6M/1Y 区间涨跌幅；不进入股票分析主流程（无技术指标/LLM 分析/买卖信号），单支基金拉取失败按 fail-open 跳过，全部失败时显式披露无数据而非静默消失；GitHub Actions workflow 已透传该变量。
 - [修复] 美股日线路由现按各数据源当前优先级排序，单项 `*_PRIORITY` 配置（如 `YFINANCE_PRIORITY=0`）对美股即时生效；指数固定首选与 Longbridge preferred 语义保持不变
 

@@ -13,8 +13,10 @@
 
 import re
 
-# 美股代码正则：1-5 个大写字母，可选 .X 后缀（如 BRK.B）
-_US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}(\.[A-Z])?$')
+# 美股代码正则：1-5 个大写字母，可选 .X 或 -X 后缀（如 BRK.B、BRK-B）。
+# Yahoo Finance 对多类股实际使用连字符形式（BRK-B），而非点号形式；
+# 两种写法都接受，避免连字符代码被误判为非美股（回退到 A 股语义，见 BRK-B 案例）。
+_US_STOCK_PATTERN = re.compile(r'^[A-Z]{1,5}([.-][A-Z])?$')
 
 
 # 用户输入 -> (Yahoo Finance 符号, 中文名称)
@@ -66,11 +68,11 @@ def is_us_stock_code(code: str) -> bool:
     """
     判断代码是否为美股股票符号（排除美股指数）。
 
-    美股股票代码为 1-5 个大写字母，可选 .X 后缀如 BRK.B。
+    美股股票代码为 1-5 个大写字母，可选 .X 或 -X 后缀，如 BRK.B、BRK-B。
     美股指数（SPX、DJI 等）明确排除。
 
     Args:
-        code: 股票代码，如 'AAPL', 'TSLA', 'BRK.B'
+        code: 股票代码，如 'AAPL', 'TSLA', 'BRK-B'
 
     Returns:
         True 表示是美股股票符号，否则 False
@@ -81,6 +83,8 @@ def is_us_stock_code(code: str) -> bool:
         >>> is_us_stock_code('TSLA')
         True
         >>> is_us_stock_code('BRK.B')
+        True
+        >>> is_us_stock_code('BRK-B')
         True
         >>> is_us_stock_code('SPX')
         False

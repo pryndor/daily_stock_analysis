@@ -88,6 +88,15 @@ class TestIsUsStockCode(unittest.TestCase):
         self.assertTrue(is_us_stock_code('BRK.B'))
         self.assertTrue(is_us_stock_code('BRK.A'))
 
+    def test_stock_with_hyphen_suffix(self):
+        """Yahoo Finance's actual multi-class-share symbol form uses a hyphen
+        (BRK-B, not BRK.B); previously only the dot form matched, causing
+        BRK-B to be misrouted to the A-share pipeline (issue: daily analysis
+        run defaulted BRK-B to sh/sz format, all data sources 404/failed)."""
+        self.assertTrue(is_us_stock_code('BRK-B'))
+        self.assertTrue(is_us_stock_code('BRK-A'))
+        self.assertTrue(is_us_stock_code('brk-b'))
+
     def test_case_insensitive(self):
         """Stock code matching should be case-insensitive"""
         self.assertTrue(is_us_stock_code('aapl'))

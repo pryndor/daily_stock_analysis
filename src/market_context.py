@@ -43,8 +43,9 @@ def detect_market(stock_code: Optional[str]) -> str:
         return suffix_market
 
     # US stocks: 1-5 uppercase letters (AAPL, TSLA, GOOGL)
-    # Also handles suffixed forms like BRK.B
-    if re.match(r'^[A-Z]{1,5}(\.[A-Z]{1,2})?$', code):
+    # Also handles suffixed forms like BRK.B / BRK-B (Yahoo Finance uses the
+    # hyphen form for multi-class shares, not the dot form)
+    if re.match(r'^[A-Z]{1,5}([.-][A-Z]{1,2})?$', code):
         return "us"
 
     # Default: A-shares (6-digit numbers like 600519, 000001)
