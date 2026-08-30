@@ -165,3 +165,31 @@ Portfolio 允许 JP/KR 账户、交易和持仓快照进入现有链路，但会
 - 不补齐 Portfolio 的 INR 汇率、成本、市值完整口径；印度 Portfolio 仅放开市场类型校验，避免前后端拒绝，不代表估值口径完整。
 
 回滚方式：移除 `in` 市场识别（`src/services/market_symbol_utils.py`）、交易日历注册（`src/core/trading_calendar.py`）、YFinance 路由扩展（`data_provider/base.py`、`data_provider/yfinance_fetcher.py`）、`VALID_MARKETS`/`_ALLOWED_MARKETS` 放行，并删除本文档中的能力声明。
+
+## 印度共同基金支持（`MF_LIST`，独立于 STOCK_LIST）
+
+支持通过 `MF_LIST` 配置 AMFI scheme code（印度共同基金注册代码），报告日报末尾追加一个独立小节，展示最新 NAV 与 1D/1W/1M/3M/6M/1Y 区间涨跌幅。共同基金不进入股票分析主流程（无 K 线、无技术指标、无 LLM 分析、无买卖信号），因为这些概念对开放式基金不适用；这是一条与股票市场支持（`in` market）完全独立的能力。
+
+支持格式：
+
+- `MF_LIST=120503,119551`（逗号分隔的 AMFI scheme code）
+- 查找 scheme code：`https://api.mfapi.in/mf/search?q=<基金名称关键字>`（浏览器直接访问即可，返回 JSON）
+
+约束与边界：
+
+- 数据源为 `mfapi.in`（免费公共 API，无需 key，聚合 AMFI 官方 NAV），仅提供 NAV 历史，不提供费用率、AUM、评级等完整基金基本面。
+- 独立数据层：`data_provider/mfapi_fetcher.py` 不继承 `BaseFetcher`，不接入股票数据源路由/熔断/优先级体系；单支基金拉取失败按 fail-open 跳过，不影响其余基金或股票分析主流程。
+- 报告渲染层：`src/services/mutual_fund_report.py` 独立小节渲染，由 `pipeline._generate_aggregate_report()` 拼接到日报末尾；标题/字段按 `zh`/`en`/`ko` 本地化，全部基金拉取失败时仍显式披露「本次未获取到有效数据」而非静默消失（与既有新闻面空态披露原则一致）。
+- 涨跌幅计算：以最新 NAV 为基准，向历史回溯到「最新交易日 - N 天」区间内最近一个可用 NAV 点位（非交易日/数据缺口按最近历史值兜底）；不做插值或交易日历对齐，属近似值，仅供参考。
+- 与股票 `STOCK_LIST` 完全解耦：`MF_LIST` 留空时不渲染小节，不影响任何既有股票分析/通知路径。
+- 未接入 Portfolio、DecisionSignal、Intelligence 情报源、Market Light 告警、Web 前端展示；当前仅日报文本小节一种呈现形式。
+- GitHub Actions 需在 Settings → Secrets/Variables 中配置 `MF_LIST`（`.github/workflows/00-daily-analysis.yml` 已透传该变量）。
+
+不承诺项：
+
+- 不承诺实时 NAV；共同基金 NAV 本身按日更新（T+1 披露），非实时行情。
+- 不提供基金评级、费用率、AUM、持仓明细、同类排名等完整基本面。
+- 不提供基金层面的 LLM 分析、买卖建议或风险提示；仅展示客观 NAV 数据。
+- 涨跌幅区间为近似值（见上），不做严格交易日对齐。
+
+回滚方式：从 GitHub Actions workflow 移除 `MF_LIST` 透传，从 `src/config.py` 移除 `mf_list`/`refresh_mf_list()`，从 `pipeline._generate_aggregate_report()` 移除 `_build_mutual_fund_section()` 调用，删除 `data_provider/mfapi_fetcher.py`、`src/services/mutual_fund_report.py` 及本文档中的能力声明。

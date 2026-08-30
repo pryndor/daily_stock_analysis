@@ -3428,6 +3428,8 @@ class StockAnalysisPipeline:
         # 使用配置中的股票列表
         if stock_codes is None:
             self.config.refresh_stock_list()
+            if hasattr(self.config, "refresh_mf_list"):
+                self.config.refresh_mf_list()
             stock_codes = self.config.stock_list
         
         if not stock_codes:
@@ -4370,7 +4372,23 @@ class StockAnalysisPipeline:
         """Generate aggregate report with backward-compatible notifier fallback."""
         generator = getattr(self.notifier, "generate_aggregate_report", None)
         if callable(generator):
-            return generator(results, report_type)
-        if report_type == ReportType.BRIEF and hasattr(self.notifier, "generate_brief_report"):
-            return self.notifier.generate_brief_report(results)
-        return self.notifier.generate_dashboard_report(results)
+            report = generator(results, report_type)
+        elif report_type == ReportType.BRIEF and hasattr(self.notifier, "generate_brief_report"):
+            report = self.notifier.generate_brief_report(results)
+        else:
+            report = self.notifier.generate_dashboard_report(results)
+        return report + self._build_mutual_fund_section()
+
+    def _build_mutual_fund_section(self) -> str:
+        """Append MF_LIST 共同基金小节（独立于股票分析，fail-open）。"""
+        config = getattr(self, "config", None)
+        mf_list = getattr(config, "mf_list", None) or []
+        if not mf_list:
+            return ""
+        try:
+            from src.services.mutual_fund_report import build_mutual_fund_section
+
+            return build_mutual_fund_section(mf_list, getattr(config, "report_language", "zh"))
+        except Exception as e:
+            logger.warning("生成共同基金小节失败: %s", e)
+            return ""

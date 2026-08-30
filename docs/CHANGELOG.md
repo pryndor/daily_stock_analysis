@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] 新增 `MF_LIST` 配置（AMFI scheme code，逗号分隔，经 mfapi.in），独立于 `STOCK_LIST`：日报末尾追加共同基金小节，展示最新 NAV 与 1D/1W/1M/3M/6M/1Y 区间涨跌幅；不进入股票分析主流程（无技术指标/LLM 分析/买卖信号），单支基金拉取失败按 fail-open 跳过，全部失败时显式披露无数据而非静默消失；GitHub Actions workflow 已透传该变量。
 - [修复] 美股日线路由现按各数据源当前优先级排序，单项 `*_PRIORITY` 配置（如 `YFINANCE_PRIORITY=0`）对美股即时生效；指数固定首选与 Longbridge preferred 语义保持不变
 
 - [新功能] 支持通过 `main.py --stocks` 一次性分析已登记板块指数，自动使用指数适用的数据与分析能力，并保持报告、历史和决策信号兼容。

@@ -872,6 +872,9 @@ class Config:
     # === 自选股配置 ===
     stock_list: List[str] = field(default_factory=list)
 
+    # === 印度共同基金配置（AMFI scheme code，经 mfapi.in，独立于 STOCK_LIST）===
+    mf_list: List[str] = field(default_factory=list)
+
     # === 飞书云文档配置 ===
     feishu_app_id: Optional[str] = None
     feishu_app_secret: Optional[str] = None
@@ -1440,7 +1443,19 @@ class Config:
             for c in split_stock_list(stock_list_str)
             if (c or "").strip()
         ]
-        
+
+        # 解析印度共同基金列表（AMFI scheme code，逗号分隔，独立于 STOCK_LIST）
+        mf_list_str = cls._resolve_env_value(
+            'MF_LIST',
+            default='',
+            prefer_env_file=True,
+        )
+        mf_list = [
+            (c or "").strip()
+            for c in split_stock_list(mf_list_str)
+            if (c or "").strip()
+        ]
+
         # === LiteLLM multi-key parsing ===
         # GEMINI_API_KEYS (comma-separated) > GEMINI_API_KEY (single)
         _gemini_keys_raw = os.getenv('GEMINI_API_KEYS', '')
@@ -1788,6 +1803,7 @@ class Config:
 
         return cls(
             stock_list=stock_list,
+            mf_list=mf_list,
             feishu_app_id=os.getenv('FEISHU_APP_ID'),
             feishu_app_secret=os.getenv('FEISHU_APP_SECRET'),
             feishu_folder_token=os.getenv('FEISHU_FOLDER_TOKEN'),
@@ -3063,7 +3079,25 @@ class Config:
         ]
 
         self.stock_list = stock_list
-    
+
+    def refresh_mf_list(self) -> None:
+        """热读取 MF_LIST 环境变量并更新配置中的共同基金列表（语义同 refresh_stock_list）。"""
+        env_file = os.getenv("ENV_FILE")
+        env_path = Path(env_file) if env_file else (Path(__file__).parent.parent / '.env')
+        mf_list_str = ''
+        if env_path.exists():
+            env_values = dotenv_values(env_path)
+            mf_list_str = (env_values.get('MF_LIST') or '').strip()
+
+        if not mf_list_str:
+            mf_list_str = os.getenv('MF_LIST', '')
+
+        self.mf_list = [
+            (c or "").strip()
+            for c in split_stock_list(mf_list_str)
+            if (c or "").strip()
+        ]
+
     def validate_structured(self) -> List[ConfigIssue]:
         """Return structured validation issues with severity levels.
 

@@ -851,6 +851,60 @@ _MARKET_SECTION_TITLES: Dict[str, Dict[str, str]] = {
 }
 
 
+MUTUAL_FUND_SECTION_TITLES: Dict[str, str] = {
+    "zh": "🇮🇳 印度共同基金",
+    "en": "🇮🇳 India Mutual Funds",
+    "ko": "🇮🇳 인도 뮤추얼 펀드",
+}
+
+_MUTUAL_FUND_LABELS: Dict[str, Dict[str, str]] = {
+    "zh": {
+        "nav_label": "净值",
+        "as_of_label": "截至",
+        "day_label": "日",
+        "week_label": "周",
+        "month_label": "月",
+        "quarter_label": "3月",
+        "half_year_label": "6月",
+        "year_label": "1年",
+        "no_data_label": "本次未获取到有效数据",
+    },
+    "en": {
+        "nav_label": "NAV",
+        "as_of_label": "as of",
+        "day_label": "1D",
+        "week_label": "1W",
+        "month_label": "1M",
+        "quarter_label": "3M",
+        "half_year_label": "6M",
+        "year_label": "1Y",
+        "no_data_label": "No data could be retrieved this run",
+    },
+    "ko": {
+        "nav_label": "기준가",
+        "as_of_label": "기준일",
+        "day_label": "1일",
+        "week_label": "1주",
+        "month_label": "1개월",
+        "quarter_label": "3개월",
+        "half_year_label": "6개월",
+        "year_label": "1년",
+        "no_data_label": "이번 실행에서 데이터를 가져오지 못했습니다",
+    },
+}
+
+
+def get_mutual_fund_labels(language: Optional[str]) -> Dict[str, str]:
+    """Return UI copy for the mutual-fund report section."""
+    normalized = normalize_report_language(language)
+    return _MUTUAL_FUND_LABELS[normalized]
+
+
+def get_mutual_fund_section_title(language: Optional[str]) -> str:
+    normalized = normalize_report_language(language)
+    return MUTUAL_FUND_SECTION_TITLES[normalized]
+
+
 def get_market_section_title(market: Optional[str], language: Optional[str]) -> str:
     """Return a localized market-section heading for grouped reports."""
     normalized_language = normalize_report_language(language)
