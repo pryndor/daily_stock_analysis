@@ -114,6 +114,7 @@ Go to your forked repo → `Settings` → `Secrets and variables` → `Actions` 
 | Secret Name | Description | Required |
 |------------|------|:----:|
 | `SINGLE_STOCK_NOTIFY` | Single stock push mode: set to `true` to push immediately after each stock analysis | Optional |
+| `INTRADAY_ALERT_ENABLED` | Intraday signal alert: when `true`, stocks with `decision_type=buy/sell` and a concrete `immediate_action` from the phase-decision guardrail also get a separate compact alert via the `alert` route (`NOTIFICATION_ALERT_CHANNELS`); reuses existing dashboard/battle-plan fields, no new analysis computation. Default `false`, does not affect the regular aggregate report push | Optional |
 | `REPORT_TYPE` | Report type: `simple` (concise), `full` (complete), `brief` (3-5 sentences), Docker recommended: `full` | Optional |
 | `REPORT_LANGUAGE` | Default output language for reports and Agent Chat: `zh` (default Chinese) / `en` (English) / `ko` (Korean); also updates prompt instructions, templates, notification fallbacks, fixed copy in the Web report view, and Ask Stock replies that omit `context.report_language`. `ko` reuses the English structural scaffolding and constrains the model to Korean output via an output-language directive; notifications render localized labels by report language. The bundled `00-daily-analysis.yml` already maps this variable, so setting it in Actions Secrets/Variables works out of the box | Optional |
 | `REPORT_SHOW_LLM_MODEL` | Whether notification report footers show the LLM model used for analysis. Defaults to `true`; set to `false` to hide runtime model metadata. This switch only affects presentation and does not change provider/model/Base URL, LiteLLM routing, or runtime model save/migration/cleanup behavior. | Optional |
@@ -720,6 +721,15 @@ Common time reference:
 | 15:00 | `'0 7 * * 1-5'` |
 | 18:00 | `'0 10 * * 1-5'` |
 | 21:00 | `'0 13 * * 1-5'` |
+
+### India Pre-Market Analysis (Independent Scheduled Task)
+
+`.github/workflows/02-india-morning-analysis.yml` is a second, fully independent scheduled task that never blocks or is blocked by `00-daily-analysis.yml`: it runs an India-stock-only analysis and push every weekday at 08:30 India Standard Time (IST), i.e. `UTC 03:00`.
+
+- Independent stock list source: reads `INDIA_STOCK_LIST` (`Settings → Secrets and variables → Actions`), not `STOCK_LIST`; the run is skipped (no error) when it's unset. Tickers need a `.NS` (NSE) or `.BO` (BSE) suffix, e.g. `RELIANCE.NS,TCS.NS,HDFCBANK.NS`.
+- Market review is fixed to `MARKET_REVIEW_REGION=in`.
+- Notification channels, LLM/data source/search configuration reuse the same Secrets/Variables as `00-daily-analysis.yml`; the two workflows push separate, independent messages — neither merges nor overwrites the other.
+- Manual trigger supports `force_run` to skip the trading-day check, same as the main workflow.
 
 ### Local Scheduled Tasks
 

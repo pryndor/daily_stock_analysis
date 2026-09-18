@@ -115,6 +115,7 @@ daily_stock_analysis/
 | Secret 名称 | 说明 | 必填 |
 |------------|------|:----:|
 | `SINGLE_STOCK_NOTIFY` | 单股推送模式：设为 `true` 则每分析完一只股票立即推送 | 可选 |
+| `INTRADAY_ALERT_ENABLED` | 盘中信号提醒：设为 `true` 时，对 `decision_type=buy/sell` 且盘中决策护栏给出明确 `immediate_action` 的个股，额外通过 `alert` 路由（`NOTIFICATION_ALERT_CHANNELS`）发送一条独立精简提醒；复用已有的决策仪表盘与作战计划字段，不新增分析计算。默认 `false`，不影响原有汇总报告推送 | 可选 |
 | `REPORT_TYPE` | 报告类型：`simple`(精简)、`full`(完整)、`brief`(3-5句概括)，Docker环境推荐设为 `full` | 可选 |
 | `REPORT_LANGUAGE` | 报告与 Agent Chat 的默认输出语言：`zh`(默认中文) / `en`(英文) / `ko`(韩文)；会同步影响 Prompt、模板、通知 fallback、Web 报告页固定文案，以及未显式传入 `context.report_language` 的问股回复。`ko` 复用英文结构骨架并通过输出语言指令约束模型用韩文输出，通知按报告语言渲染本地化标签。仓库自带 `00-daily-analysis.yml` 已显式映射该变量，直接在 Actions Secrets/Variables 中配置即可生效 | 可选 |
 | `REPORT_SUMMARY_ONLY` | 仅分析结果摘要：设为 `true` 时只推送汇总，不含个股详情；多股时适合快速浏览（默认 false，Issue #262） | 可选 |
@@ -780,6 +781,15 @@ schedule:
 | 15:00 | `'0 7 * * 1-5'` |
 | 18:00 | `'0 10 * * 1-5'` |
 | 21:00 | `'0 13 * * 1-5'` |
+
+### 印度盘前分析（独立定时任务）
+
+`.github/workflows/02-india-morning-analysis.yml` 是与 `00-daily-analysis.yml` 完全独立、互不阻塞的第二个定时任务：每个工作日印度标准时间（IST）08:30（`UTC 03:00`）单独跑一次印度股票分析并推送。
+
+- 股票列表来源独立：读取 `INDIA_STOCK_LIST`（`Settings → Secrets and variables → Actions`），不是 `STOCK_LIST`；未配置时本次运行直接跳过（不报错）。代码需带 `.NS`（NSE）或 `.BO`（BSE）后缀，如 `RELIANCE.NS,TCS.NS,HDFCBANK.NS`。
+- 大盘复盘固定使用 `MARKET_REVIEW_REGION=in`。
+- 通知渠道、LLM/数据源/搜索配置复用与 `00-daily-analysis.yml` 相同的 Secrets/Variables，两个工作流各自独立推送一条消息，互不合并、互不覆盖。
+- 手动触发支持 `force_run` 跳过交易日检查，用法与主工作流一致。
 
 #### GitHub Actions 非交易日手动运行（Issue #461 / #466）
 

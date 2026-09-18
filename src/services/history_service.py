@@ -1244,8 +1244,13 @@ class HistoryService:
                     f"| 🔵 {labels['secondary_buy_label']} | {self._clean_sniper_value(sniper.get('secondary_buy', 'N/A'))} |",
                     f"| 🛑 {labels['stop_loss_label']} | {self._clean_sniper_value(sniper.get('stop_loss', 'N/A'))} |",
                     f"| 🎊 {labels['take_profit_label']} | {self._clean_sniper_value(sniper.get('take_profit', 'N/A'))} |",
-                    "",
                 ])
+                if sniper.get('expected_high') or sniper.get('expected_low'):
+                    report_lines.extend([
+                        f"| 📈 {labels['expected_high_label']} | {self._clean_sniper_value(sniper.get('expected_high', 'N/A'))} |",
+                        f"| 📉 {labels['expected_low_label']} | {self._clean_sniper_value(sniper.get('expected_low', 'N/A'))} |",
+                    ])
+                report_lines.append("")
             # 仓位策略
             position = battle.get('position_strategy', {})
             if position:

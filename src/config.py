@@ -1124,6 +1124,11 @@ class Config:
     # 单股推送模式：每分析完一只股票立即推送，而不是汇总后推送
     single_stock_notify: bool = False
 
+    # 盘中信号提醒：对 decision_type=buy/sell 且盘中决策护栏给出明确 immediate_action
+    # 的个股，额外通过 route_type=alert 通道发送一条独立的精简提醒；默认关闭，
+    # 不影响原有汇总报告推送。
+    intraday_alert_enabled: bool = False
+
     # 报告类型：simple(精简) 或 full(完整)
     report_type: str = "simple"
     report_language: str = "zh"
@@ -2111,6 +2116,7 @@ class Config:
                 default=False,
             ),
             single_stock_notify=os.getenv('SINGLE_STOCK_NOTIFY', 'false').lower() == 'true',
+            intraday_alert_enabled=os.getenv('INTRADAY_ALERT_ENABLED', 'false').lower() == 'true',
             report_type=cls._parse_report_type(os.getenv('REPORT_TYPE', 'simple')),
             report_language=cls._parse_report_language(report_language_raw),
             report_summary_only=os.getenv('REPORT_SUMMARY_ONLY', 'false').lower() == 'true',

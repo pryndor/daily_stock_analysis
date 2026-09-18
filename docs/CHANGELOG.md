@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] 新增「今日精选 / 本月精选」小节，复用现有决策仪表盘 `sentiment_score`（本次运行结果取最高分若干只）与既有历史记录（`HistoryService` 按自然月聚合每只股票的最高分记录），拼接到日报末尾；共同基金小节同步增加「本月最佳基金」一行（复用已拉取的 NAV 区间涨跌幅，不新增网络请求）。不新增评分逻辑，单一环节失败不影响主报告推送。
+- [新功能] 新增独立定时工作流 `.github/workflows/02-india-morning-analysis.yml`：印度交易日 08:30 IST（UTC 03:00）单独运行一次印度股票分析并推送，股票列表来源为新增 `INDIA_STOCK_LIST`（独立于 `STOCK_LIST`），大盘复盘固定 `MARKET_REVIEW_REGION=in`；与现有 18:00 北京时间主工作流完全独立、互不阻塞，不改动主工作流。
+- [新功能] 决策仪表盘「作战计划」新增 `expected_high`/`expected_low`（预计高点/预计低点）字段，随 LLM 分析一并生成并渲染进个股详情表格；新增盘中信号提醒（`INTRADAY_ALERT_ENABLED`，默认关闭）：对 `decision_type=buy/sell` 且盘中决策护栏给出明确 `immediate_action` 的个股，复用已计算的作战计划/护栏字段，额外通过 `alert` 通知路由发送一条独立精简提醒；不新增分析计算，单股失败不影响其余提醒或主报告。
+- [修复] 英文报告（`report_language=en`）中大盘复盘的主要指数名称（如「上证指数」「深证成指」）与行业板块名称（如「农业」「有色金属矿采选业」）此前来自数据源原始中文字段，未随语言设置翻译，导致英文报告混杂中文；在 `src/report_language.py` 新增 `localize_index_name`/`localize_sector_name` 翻译表并接入 `src/market_analyzer.py`（LLM 提示词数据块、模板兜底路径）与 `src/core/market_review.py`（板块表格渲染），未收录的指数/板块名称保留原文而非猜测翻译；概念/题材板块名称因命名开放多变，本次未覆盖。
 - [修复] `in`（印度）市场交易日历注册使用了不存在的 `exchange-calendars` 日历名 `XNSE`，实际生产运行报 `The requested ExchangeCalendar, XNSE, does not exist.`；该库下 NSE/BSE 共用同一注册日历 `XBOM`（Bombay Stock Exchange MIC），已修正为 `XBOM`。此前已按既有 fail-open 语义降级，不影响其他市场或中断分析流程，仅印度交易日/盘中阶段判断本身不生效。
 - [修复] 连字符形式的美股多类股代码（如伯克希尔 `BRK-B`，Yahoo Finance 的实际符号形式）此前未被识别为美股，被误判并默认按 A 股语义处理（拼接 `.SZ` 后缀），导致该代码在数据源路由、`detect_market` LLM 语境分类、股票身份解析（`stock_code_utils`）三处均判定为 `cn`，实际拉取时依次尝试 5 个数据源全部失败（含 baostock「股票代码应为9位」报错、yfinance `BRK-B.SZ` 404），耗时约 30 秒后仍对空数据发起 LLM 分析，得到低置信度的强制观望结论。三处美股代码正则统一放宽为同时接受 `.X` 与 `-X` 单字母后缀（`data_provider/us_index_mapping.py` 为路由/数据源侧唯一权威判定，`src/market_context.py`、`src/services/stock_code_utils.py` 为独立副本一并修正）。
 - [新功能] 新增 `MF_LIST` 配置（AMFI scheme code，逗号分隔，经 mfapi.in），独立于 `STOCK_LIST`：日报末尾追加共同基金小节，展示最新 NAV 与 1D/1W/1M/3M/6M/1Y 区间涨跌幅；不进入股票分析主流程（无技术指标/LLM 分析/买卖信号），单支基金拉取失败按 fail-open 跳过，全部失败时显式披露无数据而非静默消失；GitHub Actions workflow 已透传该变量。

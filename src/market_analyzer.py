@@ -22,7 +22,11 @@ import pandas as pd
 
 from src.agent.provider_trace import resolved_model_provider_identity
 from src.config import get_config
-from src.report_language import normalize_report_language
+from src.report_language import (
+    localize_index_name,
+    localize_sector_name,
+    normalize_report_language,
+)
 from src.search_service import SearchService
 from src.core.market_profile import get_profile, MarketProfile
 from src.core.market_strategy import get_market_strategy_blueprint
@@ -1364,8 +1368,9 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             arrow = self._get_index_change_arrow(idx.change_pct)
             amount_raw = idx.amount or 0.0
             amount_str = self._format_turnover_value(amount_raw)
+            idx_name = localize_index_name(idx.name, self._get_review_language())
             lines.append(
-                f"| {idx.name} | {idx.current:.2f} | {arrow} {idx.change_pct:+.2f}% | "
+                f"| {idx_name} | {idx.current:.2f} | {arrow} {idx.change_pct:+.2f}% | "
                 f"{self._format_optional_number(idx.open)} | {self._format_optional_number(idx.high)} | "
                 f"{self._format_optional_number(idx.low)} | {self._format_optional_pct(idx.amplitude)} | {amount_str} |"
             )
@@ -1394,8 +1399,9 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
                 "|------|------|--------|",
             ])
             for rank, item in enumerate(rows[:5], 1):
+                item_name = localize_sector_name(item.get('name', '-'), language)
                 lines.append(
-                    f"| {rank} | {item.get('name', '-')} | {self._format_signed_pct(item.get('change_pct'))} |"
+                    f"| {rank} | {item_name} | {self._format_signed_pct(item.get('change_pct'))} |"
                 )
 
         if language == "en":
@@ -1479,7 +1485,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         return f"{numeric_value:+.2f}%"
 
     @classmethod
-    def _format_ranking_summary(cls, rows: List[Dict], limit: int = 3) -> str:
+    def _format_ranking_summary(cls, rows: List[Dict], limit: int = 3, language: Optional[str] = "zh") -> str:
         parts = []
         for item in (rows or [])[:limit]:
             if not isinstance(item, dict):
@@ -1487,6 +1493,7 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
             name = str(item.get("name") or "").strip()
             if not name:
                 continue
+            name = localize_sector_name(name, language)
             parts.append(f"{name}({cls._format_signed_pct(item.get('change_pct'))})")
         return ", ".join(parts)
 
@@ -1660,13 +1667,14 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
         indices_text = ""
         for idx in overview.indices:
             direction = "↑" if idx.change_pct > 0 else "↓" if idx.change_pct < 0 else "-"
-            indices_text += f"- {idx.name}: {idx.current:.2f} ({direction}{abs(idx.change_pct):.2f}%)\n"
-        
+            idx_name = localize_index_name(idx.name, review_language)
+            indices_text += f"- {idx_name}: {idx.current:.2f} ({direction}{abs(idx.change_pct):.2f}%)\n"
+
         # 板块信息
-        top_sectors_text = self._format_ranking_summary(overview.top_sectors)
-        bottom_sectors_text = self._format_ranking_summary(overview.bottom_sectors)
-        top_concepts_text = self._format_ranking_summary(overview.top_concepts)
-        bottom_concepts_text = self._format_ranking_summary(overview.bottom_concepts)
+        top_sectors_text = self._format_ranking_summary(overview.top_sectors, language=review_language)
+        bottom_sectors_text = self._format_ranking_summary(overview.bottom_sectors, language=review_language)
+        top_concepts_text = self._format_ranking_summary(overview.top_concepts, language=review_language)
+        bottom_concepts_text = self._format_ranking_summary(overview.bottom_concepts, language=review_language)
         
         # 新闻信息 - 支持 SearchResult 对象或字典
         news_text = ""
@@ -1920,14 +1928,15 @@ Output the report content directly, no extra commentary.
         indices_text = ""
         for idx in overview.indices[:4]:
             marker = self._get_index_change_arrow(idx.change_pct)
-            indices_text += f"- **{idx.name}**: {idx.current:.2f} ({marker} {idx.change_pct:+.2f}%)\n"
-        
+            idx_name = localize_index_name(idx.name, template_language)
+            indices_text += f"- **{idx_name}**: {idx.current:.2f} ({marker} {idx.change_pct:+.2f}%)\n"
+
         # 板块信息
         separator = ", " if template_language == "en" else "、"
-        top_text = separator.join([s['name'] for s in overview.top_sectors[:3]])
-        bottom_text = separator.join([s['name'] for s in overview.bottom_sectors[:3]])
-        top_concept_text = separator.join([s['name'] for s in overview.top_concepts[:3]])
-        bottom_concept_text = separator.join([s['name'] for s in overview.bottom_concepts[:3]])
+        top_text = separator.join([localize_sector_name(s['name'], template_language) for s in overview.top_sectors[:3]])
+        bottom_text = separator.join([localize_sector_name(s['name'], template_language) for s in overview.bottom_sectors[:3]])
+        top_concept_text = separator.join([localize_sector_name(s['name'], template_language) for s in overview.top_concepts[:3]])
+        bottom_concept_text = separator.join([localize_sector_name(s['name'], template_language) for s in overview.bottom_concepts[:3]])
 
         if template_language == "en":
             stats_section = ""

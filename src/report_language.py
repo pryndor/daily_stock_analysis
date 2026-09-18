@@ -428,6 +428,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "secondary_buy_label": "次优买入点",
         "stop_loss_label": "止损位",
         "take_profit_label": "目标位",
+        "expected_high_label": "预计高点",
+        "expected_low_label": "预计低点",
         "suggested_position_label": "仓位建议",
         "entry_plan_label": "建仓策略",
         "risk_control_label": "风控策略",
@@ -443,6 +445,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "no_results": "无分析结果",
         "report_title": "股票分析报告",
         "avg_score_label": "均分",
+        "pick_of_day_heading": "今日精选",
+        "pick_of_month_heading": "本月精选",
         "action_points_heading": "操作点位",
         "position_advice_heading": "持仓建议",
         "analysis_model_label": "分析模型",
@@ -563,6 +567,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "secondary_buy_label": "Secondary Entry",
         "stop_loss_label": "Stop Loss",
         "take_profit_label": "Target",
+        "expected_high_label": "Expected High",
+        "expected_low_label": "Expected Low",
         "suggested_position_label": "Position Size",
         "entry_plan_label": "Entry Plan",
         "risk_control_label": "Risk Control",
@@ -578,6 +584,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "no_results": "No analysis results",
         "report_title": "Stock Analysis Report",
         "avg_score_label": "Avg Score",
+        "pick_of_day_heading": "Pick of the Day",
+        "pick_of_month_heading": "Pick of the Month",
         "action_points_heading": "Action Levels",
         "position_advice_heading": "Position Advice",
         "analysis_model_label": "Model",
@@ -698,6 +706,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "secondary_buy_label": "추가 매수가",
         "stop_loss_label": "손절가",
         "take_profit_label": "목표가",
+        "expected_high_label": "예상 고점",
+        "expected_low_label": "예상 저점",
         "suggested_position_label": "비중 제안",
         "entry_plan_label": "진입 전략",
         "risk_control_label": "리스크 관리",
@@ -713,6 +723,8 @@ _REPORT_LABELS: Dict[str, Dict[str, str]] = {
         "no_results": "분석 결과 없음",
         "report_title": "종목 분석 리포트",
         "avg_score_label": "평균 점수",
+        "pick_of_day_heading": "오늘의 픽",
+        "pick_of_month_heading": "이달의 픽",
         "action_points_heading": "대응 가격대",
         "position_advice_heading": "보유 전략",
         "analysis_model_label": "분석 모델",
@@ -868,6 +880,7 @@ _MUTUAL_FUND_LABELS: Dict[str, Dict[str, str]] = {
         "half_year_label": "6月",
         "year_label": "1年",
         "no_data_label": "本次未获取到有效数据",
+        "pick_fund_label": "🏆 本月表现最佳",
     },
     "en": {
         "nav_label": "NAV",
@@ -879,6 +892,7 @@ _MUTUAL_FUND_LABELS: Dict[str, Dict[str, str]] = {
         "half_year_label": "6M",
         "year_label": "1Y",
         "no_data_label": "No data could be retrieved this run",
+        "pick_fund_label": "🏆 Best performer this month",
     },
     "ko": {
         "nav_label": "기준가",
@@ -890,6 +904,7 @@ _MUTUAL_FUND_LABELS: Dict[str, Dict[str, str]] = {
         "half_year_label": "6개월",
         "year_label": "1년",
         "no_data_label": "이번 실행에서 데이터를 가져오지 못했습니다",
+        "pick_fund_label": "🏆 이달 최고 수익률",
     },
 }
 
@@ -903,6 +918,161 @@ def get_mutual_fund_labels(language: Optional[str]) -> Dict[str, str]:
 def get_mutual_fund_section_title(language: Optional[str]) -> str:
     normalized = normalize_report_language(language)
     return MUTUAL_FUND_SECTION_TITLES[normalized]
+
+
+_INDEX_NAME_TRANSLATIONS: Dict[str, str] = {
+    "上证指数": "SSE Composite Index",
+    "深证成指": "SZSE Component Index",
+    "创业板指": "ChiNext Index",
+    "科创50": "STAR 50 Index",
+    "北证50": "BSE 50 Index",
+    "上证50": "SSE 50 Index",
+    "沪深300": "CSI 300 Index",
+    "中证500": "CSI 500 Index",
+    "中证1000": "CSI 1000 Index",
+    "恒生指数": "Hang Seng Index",
+    "恒生科技指数": "Hang Seng TECH Index",
+    "国企指数": "Hang Seng China Enterprises Index",
+    "日经225": "Nikkei 225",
+    "东证指数": "TOPIX",
+    "台湾加权指数": "Taiwan Weighted Index (TAIEX)",
+    "台湾柜买指数": "Taipei Exchange Index (TPEx)",
+    "标普500指数": "S&P 500 Index",
+    "道琼斯工业指数": "Dow Jones Industrial Average",
+    "纳斯达克综合指数": "Nasdaq Composite Index",
+    "纳斯达克100指数": "Nasdaq 100 Index",
+    "罗素2000指数": "Russell 2000 Index",
+    "VIX恐慌指数": "VIX (CBOE Volatility Index)",
+}
+
+# Best-effort CN -> EN map for industry/sector board names surfaced by
+# data providers (Eastmoney industry boards + Sina/GB-T4754 style
+# classification). Deliberately not exhaustive: concept/theme board names
+# are open-ended and change too often to hardcode reliably. Unmapped names
+# fall back to the original Chinese text rather than risk a wrong guess.
+_SECTOR_NAME_TRANSLATIONS: Dict[str, str] = {
+    "农业": "Agriculture",
+    "林业": "Forestry",
+    "渔业": "Fishery",
+    "养殖业": "Animal Farming",
+    "种植业": "Crop Farming",
+    "农、林、牧、渔服务业": "Agriculture, Forestry, Animal Husbandry & Fishery Services",
+    "科技推广和应用服务业": "Technology Promotion and Application Services",
+    "邮政业": "Postal Services",
+    "研究和试验发展": "Research and Experimental Development",
+    "有色金属矿采选业": "Non-ferrous Metal Mining and Dressing",
+    "机动车、电子产品和日用产品修理业": "Repair of Motor Vehicles, Electronic Products and Daily Products",
+    "其他金融业": "Other Financial Services",
+    "开采辅助活动": "Mining Support Activities",
+    "半导体": "Semiconductors",
+    "软件开发": "Software Development",
+    "互联网服务": "Internet Services",
+    "互联网电商": "Internet E-commerce",
+    "计算机设备": "Computer Equipment",
+    "通信设备": "Communication Equipment",
+    "通信服务": "Communication Services",
+    "消费电子": "Consumer Electronics",
+    "电子元件": "Electronic Components",
+    "光学光电子": "Optics and Optoelectronics",
+    "汽车整车": "Automobile Manufacturing",
+    "汽车零部件": "Auto Parts",
+    "汽车服务": "Auto Services",
+    "银行": "Banking",
+    "保险": "Insurance",
+    "证券": "Securities",
+    "多元金融": "Diversified Financial Services",
+    "房地产开发": "Real Estate Development",
+    "房地产服务": "Real Estate Services",
+    "医药商业": "Pharmaceutical Commerce",
+    "化学制药": "Chemical Pharmaceuticals",
+    "中药": "Traditional Chinese Medicine",
+    "生物制品": "Biological Products",
+    "医疗器械": "Medical Devices",
+    "医疗服务": "Medical Services",
+    "食品加工": "Food Processing",
+    "饮料制造": "Beverage Manufacturing",
+    "酿酒行业": "Alcohol/Liquor Industry",
+    "纺织服装": "Textile and Apparel",
+    "钢铁行业": "Steel Industry",
+    "有色金属": "Non-ferrous Metals",
+    "贵金属": "Precious Metals",
+    "小金属": "Minor Metals",
+    "煤炭行业": "Coal Industry",
+    "石油行业": "Petroleum Industry",
+    "化工行业": "Chemical Industry",
+    "化学制品": "Chemical Products",
+    "化肥行业": "Fertilizer Industry",
+    "农药兽药": "Pesticides and Veterinary Drugs",
+    "塑料制品": "Plastic Products",
+    "橡胶制品": "Rubber Products",
+    "非金属材料": "Non-metallic Materials",
+    "玻璃玻纤": "Glass and Fiberglass",
+    "造纸印刷": "Papermaking and Printing",
+    "包装材料": "Packaging Materials",
+    "家用电器": "Home Appliances",
+    "电力行业": "Electric Power Industry",
+    "公用事业": "Utilities",
+    "燃气": "Gas Utilities",
+    "水务": "Water Utilities",
+    "航空机场": "Aviation and Airports",
+    "航运港口": "Shipping and Ports",
+    "铁路公路": "Railway and Highway",
+    "物流行业": "Logistics Industry",
+    "旅游酒店": "Tourism and Hotels",
+    "教育": "Education",
+    "传媒": "Media",
+    "文化传媒": "Culture and Media",
+    "游戏": "Gaming",
+    "影视院线": "Film and Cinema",
+    "电信运营": "Telecom Operators",
+    "工程建设": "Engineering Construction",
+    "装修建材": "Decoration and Building Materials",
+    "装修装饰": "Decoration",
+    "水泥建材": "Cement and Building Materials",
+    "工程机械": "Construction Machinery",
+    "专用设备": "Specialty Equipment",
+    "通用设备": "General Equipment",
+    "电力设备": "Power Equipment",
+    "电网设备": "Grid Equipment",
+    "光伏设备": "Photovoltaic Equipment",
+    "风电设备": "Wind Power Equipment",
+    "电池": "Battery",
+    "新能源": "New Energy",
+    "储能": "Energy Storage",
+    "航天航空": "Aerospace",
+    "航天军工": "Aerospace and Defense",
+    "船舶制造": "Shipbuilding",
+    "饲料行业": "Feed Industry",
+    "商业百货": "Department Stores",
+    "专业连锁": "Specialty Chain Retail",
+    "贸易行业": "Trading Industry",
+}
+
+
+def localize_index_name(value: Any, language: Optional[str]) -> str:
+    """Translate a known market index name into English when recognized.
+
+    Falls back to the original text for unmapped names (Chinese remains
+    for indices outside the maintained list) rather than guessing.
+    """
+    normalized_language = normalize_report_language(language)
+    raw_text = str(value or "").strip()
+    if not raw_text or normalized_language != "en":
+        return raw_text
+    return _INDEX_NAME_TRANSLATIONS.get(raw_text, raw_text)
+
+
+def localize_sector_name(value: Any, language: Optional[str]) -> str:
+    """Translate a known industry/sector board name into English when recognized.
+
+    Concept/theme board names are intentionally excluded (too open-ended to
+    hardcode reliably); unmapped names fall back to the original text.
+    """
+    normalized_language = normalize_report_language(language)
+    raw_text = str(value or "").strip()
+    if not raw_text or normalized_language != "en":
+        return raw_text
+    return _SECTOR_NAME_TRANSLATIONS.get(raw_text, raw_text)
 
 
 def get_market_section_title(market: Optional[str], language: Optional[str]) -> str:

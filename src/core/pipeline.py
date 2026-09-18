@@ -3823,7 +3823,15 @@ class StockAnalysisPipeline:
         try:
             logger.info("生成决策仪表盘日报...")
             report = self._generate_aggregate_report(results, report_type)
-            
+
+            if not skip_push and bool(getattr(self.config, "intraday_alert_enabled", False)):
+                try:
+                    from src.services.intraday_alert import send_intraday_alerts
+
+                    send_intraday_alerts(results, self.notifier)
+                except Exception as exc:
+                    logger.warning("盘中信号提醒发送失败，不影响主报告推送: %s", exc)
+
             # 跳过推送（单股推送模式 / 合并模式：报告已由 _save_local_report 保存）
             if skip_push:
                 notification_run = self._build_notification_run_snapshot(
@@ -4377,7 +4385,19 @@ class StockAnalysisPipeline:
             report = self.notifier.generate_brief_report(results)
         else:
             report = self.notifier.generate_dashboard_report(results)
-        return report + self._build_mutual_fund_section()
+        return report + self._build_pick_of_period_section(results) + self._build_mutual_fund_section()
+
+    def _build_pick_of_period_section(self, results: List[AnalysisResult]) -> str:
+        """Append Pick of the Day / Pick of the Month sections (fail-open, additive-only)."""
+        config = getattr(self, "config", None)
+        report_language = getattr(config, "report_language", "zh")
+        try:
+            from src.services.pick_of_period import build_pick_of_day_section, build_pick_of_month_section
+
+            return build_pick_of_day_section(results, report_language) + build_pick_of_month_section(report_language)
+        except Exception as e:
+            logger.warning("生成今日/本月精选小节失败: %s", e)
+            return ""
 
     def _build_mutual_fund_section(self) -> str:
         """Append MF_LIST 共同基金小节（独立于股票分析，fail-open）。"""

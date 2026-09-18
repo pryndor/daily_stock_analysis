@@ -1980,7 +1980,9 @@ class GeminiAnalyzer:
                 "ideal_buy": "理想买入点：XX元（在MA5附近）",
                 "secondary_buy": "次优买入点：XX元（在MA10附近）",
                 "stop_loss": "止损位：XX元（跌破MA20或X%）",
-                "take_profit": "目标位：XX元（前高/整数关口）"
+                "take_profit": "目标位：XX元（前高/整数关口）",
+                "expected_high": "预计明日盘中高点：XX元（依据近期波动区间/压力位估算）",
+                "expected_low": "预计明日盘中低点：XX元（依据近期波动区间/支撑位估算）"
             },
             "position_strategy": {
                 "suggested_position": "建议仓位：X成",
@@ -2168,7 +2170,9 @@ class GeminiAnalyzer:
                 "ideal_buy": "理想入场位：XX元（满足主要技能触发条件）",
                 "secondary_buy": "次优入场位：XX元（更保守或确认后执行）",
                 "stop_loss": "止损位：XX元（失效条件或X%风险）",
-                "take_profit": "目标位：XX元（按阻力位/风险回报比制定）"
+                "take_profit": "目标位：XX元（按阻力位/风险回报比制定）",
+                "expected_high": "预计明日盘中高点：XX元（依据近期波动区间/压力位估算）",
+                "expected_low": "预计明日盘中低点：XX元（依据近期波动区间/支撑位估算）"
             },
             "position_strategy": {
                 "suggested_position": "建议仓位：X成",

@@ -96,6 +96,8 @@ class SniperPoints(BaseModel):
     secondary_buy: Optional[Union[str, int, float]] = None
     stop_loss: Optional[Union[str, int, float]] = None
     take_profit: Optional[Union[str, int, float]] = None
+    expected_high: Optional[Union[str, int, float]] = None
+    expected_low: Optional[Union[str, int, float]] = None
 
 
 class PositionStrategy(BaseModel):

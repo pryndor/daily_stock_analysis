@@ -21,7 +21,7 @@ import uuid
 from src.config import get_config
 from src.notification import NotificationService
 from src.market_analyzer import MarketAnalyzer
-from src.report_language import normalize_report_language
+from src.report_language import localize_sector_name, normalize_report_language
 from src.search_service import SearchService
 from src.analyzer import AnalysisResult, GeminiAnalyzer
 from src.llm.generation_backend import GenerationError
@@ -746,7 +746,7 @@ def _render_sector_payload_block(payload: Dict[str, Any]) -> str:
         for rank, sector in enumerate(top[:5], 1):
             if not isinstance(sector, dict):
                 continue
-            name = str(sector.get("name") or "-").strip() or "-"
+            name = localize_sector_name(str(sector.get("name") or "-").strip() or "-", language)
             lines.append(f"| {rank} | {name} | {_format_sector_change_pct(sector)} |")
     if bottom:
         if lines:
@@ -758,7 +758,7 @@ def _render_sector_payload_block(payload: Dict[str, Any]) -> str:
         for rank, sector in enumerate(bottom[:5], 1):
             if not isinstance(sector, dict):
                 continue
-            name = str(sector.get("name") or "-").strip() or "-"
+            name = localize_sector_name(str(sector.get("name") or "-").strip() or "-", language)
             lines.append(f"| {rank} | {name} | {_format_sector_change_pct(sector)} |")
     return "\n".join(lines).strip()
 

@@ -34,6 +34,14 @@ def _format_quote_line(quote: MFQuote, labels: dict) -> str:
     )
 
 
+def _pick_top_scheme_this_month(quotes: List[MFQuote]) -> Optional[MFQuote]:
+    """Best 1-month performer among fetched quotes; reuses already-fetched NAV data."""
+    ranked = [q for q in quotes if q.change_1m_pct is not None]
+    if not ranked:
+        return None
+    return max(ranked, key=lambda q: q.change_1m_pct)
+
+
 def build_mutual_fund_section(scheme_codes: List[str], report_language: str) -> str:
     """返回完整 markdown 小节文本；scheme_codes 为空时返回空字符串（调用方不应拼接）。
 
@@ -51,6 +59,15 @@ def build_mutual_fund_section(scheme_codes: List[str], report_language: str) -> 
     if not quotes:
         lines.append(f"_{labels['no_data_label']}_")
         return "\n".join(lines)
+
+    if len(quotes) > 1:
+        top_scheme = _pick_top_scheme_this_month(quotes)
+        if top_scheme is not None:
+            lines.append(
+                f"{labels['pick_fund_label']}: **{top_scheme.scheme_name}** "
+                f"({labels['month_label']} {_format_pct(top_scheme.change_1m_pct)})"
+            )
+            lines.append("")
 
     for quote in quotes:
         lines.append(_format_quote_line(quote, labels))
