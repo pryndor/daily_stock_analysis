@@ -1,0 +1,193 @@
+name: 印度盘前分析
+
+# 独立于 00-daily-analysis.yml（北京时间 18:00 全量分析）的新增定时任务：
+# 每个交易日印度时间 08:30（UTC 03:00，印度开盘前）单独跑一次印度股票分析，
+# 使用与主流程相同的分析/通知链路，仅股票列表来源（INDIA_STOCK_LIST）和市场
+# 复盘 region 不同；不修改、不依赖主工作流，互相独立、互不阻塞。
+
+on:
+  # 定时触发 - 每个工作日印度时间 08:30 (UTC 03:00)
+  schedule:
+    - cron: '0 3 * * 1-5'      # 周一到周五，UTC 03:00 = 印度标准时间(IST) 08:30
+
+  # 手动触发
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: '强制运行（跳过交易日检查）'
+        required: false
+        default: false
+        type: boolean
+
+# 并发控制：与主工作流（stock-analysis）使用不同分组，互不取消
+concurrency:
+  group: india-morning-analysis
+  cancel-in-progress: false
+
+jobs:
+  analyze-india:
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(vars.ANALYSIS_TIMEOUT_MINUTES || '30') }}
+
+    steps:
+      - name: 随机延迟（避免固定时间访问）
+        run: sleep $((RANDOM % 60))
+
+      - name: 检出代码
+        uses: actions/checkout@v5
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 安装依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 创建必要目录
+        run: |
+          mkdir -p data logs reports
+
+      - name: 执行印度股票分析
+        env:
+          # ==========================================
+          # AI 配置（与主工作流一致，复用同一套生成后端）
+          # ==========================================
+          GENERATION_BACKEND: ${{ vars.GENERATION_BACKEND || secrets.GENERATION_BACKEND }}
+          GENERATION_FALLBACK_BACKEND: ${{ vars.GENERATION_FALLBACK_BACKEND || secrets.GENERATION_FALLBACK_BACKEND || 'litellm' }}
+          GENERATION_BACKEND_TIMEOUT_SECONDS: ${{ vars.GENERATION_BACKEND_TIMEOUT_SECONDS || secrets.GENERATION_BACKEND_TIMEOUT_SECONDS }}
+          GENERATION_BACKEND_MAX_OUTPUT_BYTES: ${{ vars.GENERATION_BACKEND_MAX_OUTPUT_BYTES || secrets.GENERATION_BACKEND_MAX_OUTPUT_BYTES }}
+          GENERATION_BACKEND_MAX_CONCURRENCY: ${{ vars.GENERATION_BACKEND_MAX_CONCURRENCY || secrets.GENERATION_BACKEND_MAX_CONCURRENCY }}
+          LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
+          LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_FALLBACK_MODELS: ${{ vars.LITELLM_FALLBACK_MODELS || secrets.LITELLM_FALLBACK_MODELS }}
+          LLM_TEMPERATURE: ${{ vars.LLM_TEMPERATURE || secrets.LLM_TEMPERATURE }}
+          LLM_CHANNELS: ${{ vars.LLM_CHANNELS || secrets.LLM_CHANNELS }}
+
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
+          GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
+          GEMINI_REQUEST_DELAY: '3.0'
+
+          AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEYS: ${{ secrets.OPENAI_API_KEYS }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_KEYS: ${{ secrets.DEEPSEEK_API_KEYS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEYS: ${{ secrets.ANTHROPIC_API_KEYS }}
+          ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || secrets.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022' }}
+
+          # ==========================================
+          # 数据源（印度股票主要依赖 YFinance；其余数据源留空不影响运行）
+          # ==========================================
+          TUSHARE_TOKEN: ${{ secrets.TUSHARE_TOKEN }}
+          LONGBRIDGE_APP_KEY: ${{ secrets.LONGBRIDGE_APP_KEY }}
+          LONGBRIDGE_APP_SECRET: ${{ secrets.LONGBRIDGE_APP_SECRET }}
+          LONGBRIDGE_ACCESS_TOKEN: ${{ secrets.LONGBRIDGE_ACCESS_TOKEN }}
+
+          # ==========================================
+          # 搜索服务
+          # ==========================================
+          ANSPIRE_API_KEYS: ${{ secrets.ANSPIRE_API_KEYS }}
+          BOCHA_API_KEYS: ${{ secrets.BOCHA_API_KEYS }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+
+          # ==========================================
+          # 通知渠道（与主工作流共用同一批渠道配置；本工作流只是另一次独立推送）
+          # ==========================================
+          WECHAT_WEBHOOK_URL: ${{ secrets.WECHAT_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_SECRET: ${{ secrets.FEISHU_WEBHOOK_SECRET }}
+          DINGTALK_WEBHOOK_URL: ${{ secrets.DINGTALK_WEBHOOK_URL }}
+          DINGTALK_SECRET: ${{ secrets.DINGTALK_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_MESSAGE_THREAD_ID: ${{ secrets.TELEGRAM_MESSAGE_THREAD_ID }}
+          EMAIL_SENDER: ${{ vars.EMAIL_SENDER || secrets.EMAIL_SENDER }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_RECEIVERS: ${{ vars.EMAIL_RECEIVERS || secrets.EMAIL_RECEIVERS }}
+          PUSHOVER_USER_KEY: ${{ secrets.PUSHOVER_USER_KEY }}
+          PUSHOVER_API_TOKEN: ${{ secrets.PUSHOVER_API_TOKEN }}
+          NTFY_URL: ${{ secrets.NTFY_URL }}
+          NTFY_TOKEN: ${{ secrets.NTFY_TOKEN }}
+          GOTIFY_URL: ${{ secrets.GOTIFY_URL }}
+          GOTIFY_TOKEN: ${{ secrets.GOTIFY_TOKEN }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          CUSTOM_WEBHOOK_URLS: ${{ secrets.CUSTOM_WEBHOOK_URLS }}
+          CUSTOM_WEBHOOK_BEARER_TOKEN: ${{ secrets.CUSTOM_WEBHOOK_BEARER_TOKEN }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          SERVERCHAN3_SENDKEY: ${{ secrets.SERVERCHAN3_SENDKEY }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+
+          NOTIFICATION_REPORT_CHANNELS: ${{ vars.NOTIFICATION_REPORT_CHANNELS || secrets.NOTIFICATION_REPORT_CHANNELS }}
+          NOTIFICATION_ALERT_CHANNELS: ${{ vars.NOTIFICATION_ALERT_CHANNELS || secrets.NOTIFICATION_ALERT_CHANNELS }}
+          NOTIFICATION_SYSTEM_ERROR_CHANNELS: ${{ vars.NOTIFICATION_SYSTEM_ERROR_CHANNELS || secrets.NOTIFICATION_SYSTEM_ERROR_CHANNELS }}
+
+          # ==========================================
+          # 印度自选股配置（独立于主工作流的 STOCK_LIST）
+          # ==========================================
+          # 印度股票代码需带 .NS（NSE）或 .BO（BSE）后缀，例如：
+          # INDIA_STOCK_LIST=RELIANCE.NS,TCS.NS,HDFCBANK.NS
+          STOCK_LIST_CONFIG: ${{ vars.INDIA_STOCK_LIST || secrets.INDIA_STOCK_LIST }}
+          MF_LIST: ${{ vars.MF_LIST || secrets.MF_LIST || '' }}
+          MARKET_REVIEW_REGION: 'in'
+
+          # ==========================================
+          # 运行配置
+          # ==========================================
+          REPORT_TYPE: ${{ vars.REPORT_TYPE || secrets.REPORT_TYPE || 'simple' }}
+          REPORT_LANGUAGE: ${{ vars.REPORT_LANGUAGE || secrets.REPORT_LANGUAGE || '' }}
+          MARKET_REVIEW_ENABLED: ${{ vars.MARKET_REVIEW_ENABLED || secrets.MARKET_REVIEW_ENABLED || 'true' }}
+          TRADING_DAY_CHECK_ENABLED: ${{ vars.TRADING_DAY_CHECK_ENABLED || secrets.TRADING_DAY_CHECK_ENABLED || 'true' }}
+          INTRADAY_ALERT_ENABLED: ${{ vars.INTRADAY_ALERT_ENABLED || secrets.INTRADAY_ALERT_ENABLED || 'false' }}
+          LOG_LEVEL: INFO
+          MAX_WORKERS: ${{ vars.MAX_WORKERS || secrets.MAX_WORKERS || '1' }}
+        run: |
+          if [ -n "$LITELLM_CONFIG_YAML" ] && [ -n "$LITELLM_CONFIG" ]; then
+            mkdir -p "$(dirname "$LITELLM_CONFIG")"
+            echo "$LITELLM_CONFIG_YAML" > "$LITELLM_CONFIG"
+          fi
+
+          if [ -z "${STOCK_LIST_CONFIG:-}" ]; then
+            echo "⚠️ 未配置 INDIA_STOCK_LIST（Settings -> Secrets and variables -> Actions），跳过本次运行"
+            exit 0
+          fi
+          export STOCK_LIST="$STOCK_LIST_CONFIG"
+
+          echo "=========================================="
+          echo "🇮🇳 印度股票盘前分析"
+          echo "=========================================="
+          echo "⏰ 时间: $(TZ='Asia/Kolkata' date '+%Y-%m-%d %H:%M:%S') IST"
+          echo "📊 自选股: $STOCK_LIST"
+          echo "=========================================="
+
+          FORCE_RUN_ARG=""
+          if [ "${{ github.event.inputs.force_run }}" = "true" ]; then
+            FORCE_RUN_ARG="--force-run"
+            echo "⚡ 已启用强制运行模式（跳过交易日检查）"
+          fi
+
+          python main.py $FORCE_RUN_ARG
+
+      - name: 上传分析报告
+        uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: india-analysis-reports-${{ github.run_number }}
+          path: |
+            reports/
+            logs/
+          retention-days: 30
