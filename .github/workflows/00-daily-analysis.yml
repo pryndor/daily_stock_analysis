@@ -102,7 +102,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
-          GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
+          GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-3.6-flash' }}
           GEMINI_REQUEST_DELAY: '3.0'
           
           # AIHubMix（优先于 OPENAI_API_KEY，自动适配 base_url，推荐国内用户）
@@ -159,6 +159,16 @@ jobs:
           LLM_DEEPSEEK_MODELS: ${{ vars.LLM_DEEPSEEK_MODELS || secrets.LLM_DEEPSEEK_MODELS }}
           LLM_DEEPSEEK_ENABLED: ${{ vars.LLM_DEEPSEEK_ENABLED || secrets.LLM_DEEPSEEK_ENABLED }}
           LLM_DEEPSEEK_EXTRA_HEADERS: ${{ vars.LLM_DEEPSEEK_EXTRA_HEADERS || secrets.LLM_DEEPSEEK_EXTRA_HEADERS }}
+
+          # Groq（OpenAI 兼容，https://console.groq.com；LPU 推理，免费额度可作为限流兜底）
+          LLM_GROQ_PROTOCOL: ${{ vars.LLM_GROQ_PROTOCOL || secrets.LLM_GROQ_PROTOCOL }}
+          LLM_GROQ_API_SURFACE: ${{ vars.LLM_GROQ_API_SURFACE || secrets.LLM_GROQ_API_SURFACE }}
+          LLM_GROQ_BASE_URL: ${{ vars.LLM_GROQ_BASE_URL || secrets.LLM_GROQ_BASE_URL }}
+          LLM_GROQ_API_KEY: ${{ secrets.LLM_GROQ_API_KEY }}
+          LLM_GROQ_API_KEYS: ${{ secrets.LLM_GROQ_API_KEYS }}
+          LLM_GROQ_MODELS: ${{ vars.LLM_GROQ_MODELS || secrets.LLM_GROQ_MODELS }}
+          LLM_GROQ_ENABLED: ${{ vars.LLM_GROQ_ENABLED || secrets.LLM_GROQ_ENABLED }}
+          LLM_GROQ_EXTRA_HEADERS: ${{ vars.LLM_GROQ_EXTRA_HEADERS || secrets.LLM_GROQ_EXTRA_HEADERS }}
 
           LLM_AIHUBMIX_PROTOCOL: ${{ vars.LLM_AIHUBMIX_PROTOCOL || secrets.LLM_AIHUBMIX_PROTOCOL }}
           LLM_AIHUBMIX_API_SURFACE: ${{ vars.LLM_AIHUBMIX_API_SURFACE || secrets.LLM_AIHUBMIX_API_SURFACE }}

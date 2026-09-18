@@ -72,7 +72,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL || 'gemini-3-flash-preview' }}
-          GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-2.5-flash' }}
+          GEMINI_MODEL_FALLBACK: ${{ vars.GEMINI_MODEL_FALLBACK || secrets.GEMINI_MODEL_FALLBACK || 'gemini-3.6-flash' }}
           GEMINI_REQUEST_DELAY: '3.0'
 
           AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
@@ -85,6 +85,16 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           ANTHROPIC_API_KEYS: ${{ secrets.ANTHROPIC_API_KEYS }}
           ANTHROPIC_MODEL: ${{ vars.ANTHROPIC_MODEL || secrets.ANTHROPIC_MODEL || 'claude-3-5-sonnet-20241022' }}
+
+          # Groq（OpenAI 兼容，https://console.groq.com；需通过 LLM_CHANNELS=groq 启用）
+          LLM_GROQ_PROTOCOL: ${{ vars.LLM_GROQ_PROTOCOL || secrets.LLM_GROQ_PROTOCOL }}
+          LLM_GROQ_API_SURFACE: ${{ vars.LLM_GROQ_API_SURFACE || secrets.LLM_GROQ_API_SURFACE }}
+          LLM_GROQ_BASE_URL: ${{ vars.LLM_GROQ_BASE_URL || secrets.LLM_GROQ_BASE_URL }}
+          LLM_GROQ_API_KEY: ${{ secrets.LLM_GROQ_API_KEY }}
+          LLM_GROQ_API_KEYS: ${{ secrets.LLM_GROQ_API_KEYS }}
+          LLM_GROQ_MODELS: ${{ vars.LLM_GROQ_MODELS || secrets.LLM_GROQ_MODELS }}
+          LLM_GROQ_ENABLED: ${{ vars.LLM_GROQ_ENABLED || secrets.LLM_GROQ_ENABLED }}
+          LLM_GROQ_EXTRA_HEADERS: ${{ vars.LLM_GROQ_EXTRA_HEADERS || secrets.LLM_GROQ_EXTRA_HEADERS }}
 
           # ==========================================
           # 数据源（印度股票主要依赖 YFinance；其余数据源留空不影响运行）

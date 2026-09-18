@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] 新增 Groq（OpenAI 兼容，LPU 推理）作为可选 LLM 渠道：`.github/workflows/00-daily-analysis.yml`、`02-india-morning-analysis.yml` 新增 `LLM_GROQ_*` 环境变量透传，`.env.example` 补充配置示例；需显式设置 `LLM_CHANNELS=groq`（或加入现有渠道列表）及 `LLM_GROQ_API_KEY` 才生效，不配置不影响现有行为。
+- [修复] `GEMINI_MODEL_FALLBACK` 默认值 `gemini-2.5-flash` 已被 Google 下线（新用户返回 404，提示改用 `gemini-3.6-flash`），叠加当日 `gemini-3-flash-preview` 主模型触发配额限流（429）后无可用兜底，导致个股分析整体失败；`.github/workflows/00-daily-analysis.yml`、`.github/workflows/02-india-morning-analysis.yml` 中 `GEMINI_MODEL_FALLBACK` 默认值改为 `gemini-3.6-flash`，`src/services/screening/config.py` 的 `DEFAULT_LLM_MODEL` 默认值同步由 `gemini/gemini-2.5-flash` 改为 `gemini/gemini-3-flash-preview`；已通过仓库变量/密钥显式设置 `GEMINI_MODEL_FALLBACK` 或 `LITELLM_FALLBACK_MODELS` 的用户不受影响。上游配额限流本身非本次改动可控，属已知风险，需另行评估配额或额外兜底渠道。
 - [新功能] 新增「今日精选 / 本月精选」小节，复用现有决策仪表盘 `sentiment_score`（本次运行结果取最高分若干只）与既有历史记录（`HistoryService` 按自然月聚合每只股票的最高分记录），拼接到日报末尾；共同基金小节同步增加「本月最佳基金」一行（复用已拉取的 NAV 区间涨跌幅，不新增网络请求）。不新增评分逻辑，单一环节失败不影响主报告推送。
 - [新功能] 新增独立定时工作流 `.github/workflows/02-india-morning-analysis.yml`：印度交易日 08:30 IST（UTC 03:00）单独运行一次印度股票分析并推送，股票列表来源为新增 `INDIA_STOCK_LIST`（独立于 `STOCK_LIST`），大盘复盘固定 `MARKET_REVIEW_REGION=in`；与现有 18:00 北京时间主工作流完全独立、互不阻塞，不改动主工作流。
 - [新功能] 决策仪表盘「作战计划」新增 `expected_high`/`expected_low`（预计高点/预计低点）字段，随 LLM 分析一并生成并渲染进个股详情表格；新增盘中信号提醒（`INTRADAY_ALERT_ENABLED`，默认关闭）：对 `decision_type=buy/sell` 且盘中决策护栏给出明确 `immediate_action` 的个股，复用已计算的作战计划/护栏字段，额外通过 `alert` 通知路由发送一条独立精简提醒；不新增分析计算，单股失败不影响其余提醒或主报告。
